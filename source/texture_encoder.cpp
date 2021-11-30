@@ -10,63 +10,33 @@
 #include <algorithm>
 #include <stdexcept>
 
-// TODO: compare with jim-nvenc.c
-
 TextureEncoder::TextureEncoder(amf::AMFContextPtr amf_context_,
                                CComPtr<ID3D11Device> device_,
                                CComPtr<ID3D11DeviceContext> context_)
     : amf_context{amf_context_}, device{device_}, context{context_} {}
 
-CComPtr<ID3D11Texture2D>
-TextureEncoder::create_texture(const D3D11_TEXTURE2D_DESC &textureDesc) {
-  // TOOD: why are these values set but not others?
-  D3D11_TEXTURE2D_DESC desc = {
-      .Width = textureDesc.Width,
-      .Height = textureDesc.Height,
-      .MipLevels = 1,
-      .ArraySize = 1,
-      .Format = textureDesc.Format,
-      .SampleDesc = {.Count = 1},
-      .BindFlags = D3D11_BIND_RENDER_TARGET,
-  };
-  CComPtr<ID3D11Texture2D> texture;
-  if (device->CreateTexture2D(&desc, NULL, &texture) < 0) {
-    throw std::runtime_error("CreateTexture2d");
-  }
-  return texture;
-}
+not_null<amf::AMFSurfacePtr>
+TextureEncoder::texture_to_surface(uint32_t handle, uint64_t lock_key,
+                                   uint64_t &next_key) {
+  // There are things copied from jim-nvenc whose purpose is unclear:
+  // - Why wouldn't OBS check for GS_INVALID_HANDLE itself before calling the
+  // encoder?
+  // - What is the purpose of lock_key and next_key? Based on testing the only
+  // use of them that is needed is ReleaseSync(next_key). OBS freezes If that
+  // isn't done.
+  // - Nvenc and the other AMF texture encoder plugin use the mutex only to copy
+  // the texture to another texture they own. In nvenc this seems to be related
+  // to the lifetime of the texture. On the other hand for AMF no lifetime
+  // requirements are documented and things worked when testing without it.
 
-amf::AMFSurfacePtr TextureEncoder::texture_to_surface(uint32_t handle,
-                                                      uint64_t lock_key,
-                                                      uint64_t &next_key) {
-  // TODO: needed? why would we get an invalid handle?
   if (handle == GS_INVALID_HANDLE) {
-    // TOOD: jim-nvenc.c has non permament error handling here. Should we?
-    throw std::runtime_error("invalid handle");
+    throw std::runtime_error("GS_INVALID_HANDLE");
   }
-
-  static const GUID AMFTextureArrayIndexGUID = {
-      0x28115527,
-      0xe7c3,
-      0x4b66,
-      {0x99, 0xd3, 0x4f, 0x2a, 0xe6, 0xb4, 0x7f, 0xaf}};
   auto texture = texture_from_handle(handle);
-
-  // Happens one time when we get the first obs texture.
-  if (!amf_input_texture) {
-    D3D11_TEXTURE2D_DESC desc;
-    texture.texture->GetDesc(&desc);
-    amf_input_texture = create_texture(desc);
-  }
-  ASSERT_(amf_input_texture);
-
   texture.mutex->AcquireSync(lock_key, INFINITE);
-  context->CopyResource(amf_input_texture.p, texture.texture.p);
-  context->Flush();
-  texture.mutex->ReleaseSync(next_key);
-
+  const auto _ = gsl::finally([&]() { texture.mutex->ReleaseSync(next_key); });
   amf::AMFSurfacePtr surface;
-  if (amf_context->CreateSurfaceFromDX11Native(amf_input_texture.p, &surface,
+  if (amf_context->CreateSurfaceFromDX11Native(texture.texture, &surface,
                                                NULL) != AMF_OK) {
     throw std::runtime_error("CreateSurfaceFromDX11Native");
   }
@@ -82,8 +52,9 @@ CachedTexture &TextureEncoder::texture_from_handle(uint32_t handle) {
   }
 
   CComPtr<ID3D11Texture2D> texture;
-  if (device->OpenSharedResource((HANDLE)(uintptr_t)handle,
-                                 IID_PPV_ARGS(&texture)) < 0) {
+  if (device->OpenSharedResource(
+          reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)),
+          IID_PPV_ARGS(&texture)) < 0) {
     throw std::runtime_error("OpenSharedResource");
   }
   CComPtr<IDXGIKeyedMutex> mutex;
