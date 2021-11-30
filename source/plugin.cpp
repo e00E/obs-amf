@@ -2,6 +2,7 @@
 
 #include "encoder.h"
 #include "encoder_details.h"
+#include "gsl.h"
 #include "util.h"
 
 #include <fmt/core.h>
@@ -13,92 +14,101 @@
 
 namespace {
 
-void *create(obs_data *settings, obs_encoder *encoder,
-             EncoderDetails details) noexcept {
-  try {
-    return new Encoder(std::move(details), *settings, *encoder);
-  } catch (const std::exception &e) {
-    log(LOG_ERROR, fmt::format("Plugin::Plugin: {}", e.what()));
-    return nullptr;
-  }
-}
+struct EncoderPlugin {
+  czstring id;
+  czstring name;
+  czstring codec;
+  SurfaceTypeE surface_type;
+  const EncoderDetails &details;
+};
 
-void destroy(void *data) noexcept { delete static_cast<Encoder *>(data); }
+template <EncoderPlugin ep> void register_encoder() {
+  obs_encoder_info info{
+      .id = ep.id,
+      .type = OBS_ENCODER_VIDEO,
+      .codec = ep.codec,
+      .get_name = [](auto) { return ep.name; },
+      .create = [](auto settings, auto encoder) -> void * {
+        try {
+          return new Encoder(ep.details, *settings, *encoder, ep.surface_type);
 
-bool encode(void *data, struct encoder_frame *frame,
-            struct encoder_packet *packet, bool *received_packet) noexcept {
-  return static_cast<Encoder *>(data)->encode(*frame, *packet,
-                                              *received_packet);
-}
-
-void get_defaults(obs_data *data,
-                  std::span<const std::unique_ptr<Setting>> settings) noexcept {
-  for (const auto &setting : settings) {
-    setting->obs_default(*data);
-  }
-}
-
-obs_properties *
-get_properties(std::span<const std::unique_ptr<Setting>> settings) noexcept {
-  auto &properties = *obs_properties_create();
-  for (const auto &setting : settings) {
-    setting->obs_property(properties);
-  }
-  return &properties;
-}
-
-bool get_extra_data(void *data, uint8_t **extra_data, size_t *size) noexcept {
-  const auto span = static_cast<Encoder *>(data)->get_extra_data();
-  *extra_data = span.data();
-  *size = span.size();
-  return true;
+        } catch (const std::exception &e) {
+          log(LOG_ERROR, fmt::format("Plugin::Plugin: {}", e.what()));
+          return nullptr;
+        }
+      },
+      .destroy = [](auto data) { delete static_cast<Encoder *>(data); },
+      .encode =
+          [](auto data, auto frame, auto packet, auto received_packet) {
+            return static_cast<Encoder *>(data)->encode(
+                CpuSurface{.frame = frame}, *packet, *received_packet);
+          },
+      .get_defaults =
+          [](auto data) {
+            for (const auto &setting : ep.details.settings()) {
+              setting->obs_default(*data);
+            }
+          },
+      .get_properties =
+          [](auto) {
+            auto &properties = *obs_properties_create();
+            for (const auto &setting : ep.details.settings()) {
+              setting->obs_property(properties);
+            }
+            return &properties;
+          },
+      .get_extra_data =
+          [](auto data, auto extra_data, auto size) {
+            const auto span = static_cast<Encoder *>(data)->get_extra_data();
+            *extra_data = span.data();
+            *size = span.size();
+            return true;
+          },
+      .caps = ep.surface_type == SurfaceTypeE::Gpu
+                  ? OBS_ENCODER_CAP_PASS_TEXTURE
+                  : 0,
+      .encode_texture =
+          [](auto *data, auto handle, auto pts, auto lock_key, auto *next_key,
+             auto *packet, auto *received_packet) {
+            return static_cast<Encoder *>(data)->encode(
+                GpuSurface{.handle = handle,
+                           .pts = pts,
+                           .lock_key = lock_key,
+                           .next_key = next_key},
+                *packet, *received_packet);
+          }};
+  obs_register_encoder(&info);
 }
 
 } // namespace
 
 OBS_DECLARE_MODULE()
 
-MODULE_EXPORT bool obs_module_load(void) {
+MODULE_EXPORT bool obs_module_load() {
   // Correct codec is important because the name is passed to ffmpeg which needs
   // to recognize it.
 
-  obs_encoder_info avc{
-      .id = "amf avc",
-      .type = OBS_ENCODER_VIDEO,
-      .codec = "h264",
-      .get_name = [](auto) { return "AMF AVC"; },
-      .create = [](auto s,
-                   auto e) { return create(s, e, encoder_details_avc); },
-      .destroy = destroy,
-      .encode = encode,
-      .get_defaults =
-          [](auto d) { get_defaults(d, encoder_details_avc.settings()); },
-      .get_properties =
-          [](auto) { return get_properties(encoder_details_avc.settings()); },
-      .get_extra_data = get_extra_data,
-  };
-  obs_register_encoder(&avc);
-
-  obs_encoder_info hevc{
-      .id = "amf hevc",
-      .type = OBS_ENCODER_VIDEO,
-      .codec = "hevc",
-      .get_name = [](auto) { return "AMF HEVC"; },
-      .create =
-          [](auto s, auto e) noexcept {
-            return ::create(s, e, encoder_details_hevc);
-          },
-      .destroy = destroy,
-      .encode = encode,
-      .get_defaults =
-          [](auto d) { get_defaults(d, encoder_details_hevc.settings()); },
-      .get_properties =
-          [](auto) { return get_properties(encoder_details_hevc.settings()); },
-      .get_extra_data = get_extra_data,
-  };
-  obs_register_encoder(&hevc);
-
+  register_encoder<EncoderPlugin{.id = "amf avc cpu",
+                                 .name = "AMF AVC CPU",
+                                 .codec = "h264",
+                                 .surface_type = SurfaceTypeE::Cpu,
+                                 .details = encoder_details_avc}>();
+  register_encoder<EncoderPlugin{.id = "amf avc gpu",
+                                 .name = "AMF AVC GPU",
+                                 .codec = "h264",
+                                 .surface_type = SurfaceTypeE::Gpu,
+                                 .details = encoder_details_avc}>();
+  register_encoder<EncoderPlugin{.id = "amf hevc cpu",
+                                 .name = "AMF HEVC CPU",
+                                 .codec = "hevc",
+                                 .surface_type = SurfaceTypeE::Cpu,
+                                 .details = encoder_details_hevc}>();
+  register_encoder<EncoderPlugin{.id = "amf hevc gpu",
+                                 .name = "AMF HEVC GPU",
+                                 .codec = "hevc",
+                                 .surface_type = SurfaceTypeE::Gpu,
+                                 .details = encoder_details_hevc}>();
   return true;
 }
 
-MODULE_EXPORT void obs_module_unload(void) {}
+MODULE_EXPORT void obs_module_unload() {}

@@ -23,9 +23,13 @@ add_library(${PROJECT_NAME} MODULE
 	source/encoder_details_avc.cpp
 	source/encoder_details_hevc.cpp
 	source/gsl.h
+	source/module.cpp
+	source/module.h
 	source/plugin.cpp
 	source/settings.cpp
 	source/settings.h
+	source/texture_encoder.cpp
+	source/texture_encoder.h
 	source/util.cpp
 	source/util.h
 )
@@ -36,8 +40,11 @@ target_include_directories(${PROJECT_NAME}
 		dependencies/fmt/include
 )
 target_link_libraries(${PROJECT_NAME}
-	libobs
+	d3d11
+	dxgi
+	dxguid
 	fmt::fmt
+	libobs
 )
 
 install_obs_plugin_with_data(${PROJECT_NAME} data)

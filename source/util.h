@@ -41,6 +41,16 @@ void set_property(amf::AMFPropertyStorage &storage, not_null<cwzstring> name,
   }
 }
 
+
+// like above but with logging
+template <AmfVariant T>
+void set_property_(amf::AMFPropertyStorage &storage, not_null<cwzstring> name,
+                   const T &value) {
+  log(LOG_INFO,
+      fmt::format("SetProperty {} {}", wstring_to_string(name), value));
+  set_property(storage, name, value);
+}
+
 // get property or throw
 template <AmfVariant T>
 T get_property(amf::AMFPropertyStorage &storage, not_null<cwzstring> name) {

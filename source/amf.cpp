@@ -1,17 +1,5 @@
 #include "amf.h"
 
-void Module::Free::operator()(HMODULE hmodule) const noexcept {
-  FreeLibrary(hmodule);
-}
-
-Module::Module(not_null<czstring> name) : inner{LoadLibraryA(name)} {
-  if (!inner) {
-    throw std::runtime_error("LoadLibraryW");
-  }
-}
-
-HMODULE Module::get() const { return inner.get(); }
-
 Amf::Amf()
     : amf_dll{AMF_DLL_NAMEA},
       query_version{get_proc_address<AMFQueryVersion_Fn>(
