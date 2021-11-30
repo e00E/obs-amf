@@ -10,20 +10,21 @@
 #include <algorithm>
 #include <stdexcept>
 
+namespace {
+
 DXGI_FORMAT amf_surface_format_to_dx11(amf::AMF_SURFACE_FORMAT format) {
+  // In the OBS UI the possible values are NV12, I420, I444, RGB. When anything
+  // other than NV12 is selected OBS does not call the texture encoding
+  // callback so we did not bother to research the other mappings.
   switch (format) {
-  // case amf ::AMF_SURFACE_YUV420P:
   case amf::AMF_SURFACE_NV12:
     return DXGI_FORMAT_NV12;
-  case amf::AMF_SURFACE_YUY2:
-    return DXGI_FORMAT_YUY2;
-  // case amf::AMF_SURFACE_RGBA:
-  // case amf::AMF_SURFACE_BGRA:
-  // case amf::AMF_SURFACE_GRAY8:
   default:
     throw std::runtime_error("unknown surface format");
   }
 }
+
+} // namespace
 
 TextureEncoder::TextureEncoder(amf::AMFContextPtr amf_context_,
                                CComPtr<ID3D11Device> device_,

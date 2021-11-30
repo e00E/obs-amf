@@ -18,19 +18,17 @@
 namespace {
 
 amf::AMF_SURFACE_FORMAT obs_format_to_amf(video_format format) {
+  // In the OBS UI the possible values are NV12, I420, I444, RGB so we do not
+  // map other values.
   switch (format) {
   case VIDEO_FORMAT_I420:
     return amf ::AMF_SURFACE_YUV420P;
   case VIDEO_FORMAT_NV12:
     return amf::AMF_SURFACE_NV12;
-  case VIDEO_FORMAT_YUY2:
-    return amf::AMF_SURFACE_YUY2;
   case VIDEO_FORMAT_RGBA:
     return amf::AMF_SURFACE_RGBA;
-  case VIDEO_FORMAT_BGRA:
-    return amf::AMF_SURFACE_BGRA;
-  case VIDEO_FORMAT_Y800:
-    return amf::AMF_SURFACE_GRAY8;
+  // not supported by AMF
+  case VIDEO_FORMAT_I444:
   default:
     throw std::runtime_error("unknown color format");
   }
