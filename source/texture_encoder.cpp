@@ -125,8 +125,8 @@ TextureEncoder::texture_to_surface(uint32_t handle, uint64_t lock_key,
   }
   amf_texture.surface = surface;
 #if 0
-   log(LOG_DEBUG, fmt::format("obs_textures {}, amf_textures {}",
-                             obs_textures.size(), amf_textures.size()));
+  log(LOG_DEBUG, "obs_textures {}, amf_textures {}", obs_textures.size(),
+      amf_textures.size());
 #endif
   return surface;
 }

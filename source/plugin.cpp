@@ -30,7 +30,7 @@ template <EncoderPlugin ep> void register_encoder() {
         try {
           return new Encoder(ep.details, *settings, *encoder);
         } catch (const std::exception &e) {
-          log(LOG_ERROR, fmt::format("Plugin::Plugin: {}", e.what()));
+          log(LOG_ERROR, "Plugin::Plugin: {}", e.what());
           return nullptr;
         }
       },

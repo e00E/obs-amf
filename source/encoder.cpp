@@ -215,13 +215,13 @@ bool Encoder::encode(SurfaceType surface_type, encoder_packet &packet,
   try {
     received_packet = retrieve_packet_from_encoder(packet);
   } catch (const std::exception &e) {
-    log(LOG_ERROR, fmt::format("retrieve_packet_from_encoder: {}", e.what()));
+    log(LOG_ERROR, "retrieve_packet_from_encoder: {}", e.what());
     return false;
   }
   try {
     send_frame_to_encoder(surface_type);
   } catch (const std::exception &e) {
-    log(LOG_ERROR, fmt::format("send_frame_to_encoder: {}", e.what()));
+    log(LOG_ERROR, "send_frame_to_encoder: {}", e.what());
     return false;
   }
   return true;
@@ -309,8 +309,8 @@ bool Encoder::retrieve_packet_from_encoder(encoder_packet &packet) {
   const auto packet_info = details.packet_info(*buffer);
   packet.keyframe = packet_info.is_key_frame;
 
-  log(LOG_DEBUG, fmt::format("packet pts {} keyframe {} size {}", packet.pts,
-                             packet.keyframe, packet.size));
+  log(LOG_DEBUG, "packet pts {} keyframe {} size {}", packet.pts,
+      packet.keyframe, packet.size);
   return true;
 }
 

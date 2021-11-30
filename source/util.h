@@ -12,9 +12,11 @@
 #include <stdexcept>
 #include <string_view>
 
-// Better than dealing with printf style formatting even if less efficient.
-inline void log(int log_level, std::string_view message) {
-  blog(log_level, "%s", fmt::format("amftest: {}", message).c_str());
+// Better than dealing with printf style formatting even if less efficient
+// because of the intermediate string we allocate.
+template <typename... T>
+inline void log(int log_level, fmt::format_string<T...> fmt, T &&...args) {
+  blog(log_level, "amftest: %s", fmt::format(fmt, args...).c_str());
 }
 
 std::string wstring_to_string(not_null<cwzstring> wstring);
@@ -22,8 +24,8 @@ std::string wstring_to_string(not_null<cwzstring> wstring);
 // Assert that always runs. On false logs location and terminates.
 #define ASSERT_(condition)                                                     \
   if (!(condition)) {                                                          \
-    log(LOG_ERROR, fmt::format("assertion failure in file {} line {}",         \
-                               __FILE__, __LINE__));                           \
+    log(LOG_ERROR, "assertion failure in file {} line {}", __FILE__,           \
+        __LINE__);                                                             \
     std::terminate();                                                          \
   }
 
