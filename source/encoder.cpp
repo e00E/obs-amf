@@ -5,10 +5,12 @@
 
 #include <AMF/components/ColorSpace.h>
 #include <AMF/core/Data.h>
+#include <AMF/core/Factory.h>
 #include <fmt/core.h>
 #include <obs-module.h>
 
 #include <combaseapi.h>
+#include <dxgi.h>
 
 #include <exception>
 #include <stdexcept>
@@ -99,7 +101,7 @@ const not_null<cwzstring> pts_property{L"obs_pts"};
 } // namespace
 
 Encoder::Encoder(EncoderDetails details_, obs_data &data,
-                 obs_encoder &obs_encoder, SurfaceTypeE surface_type)
+                 obs_encoder &obs_encoder)
     : details{std::move(details_)} {
   initialize_dx11();
 
@@ -111,16 +113,14 @@ Encoder::Encoder(EncoderDetails details_, obs_data &data,
     throw std::runtime_error("AMFContext::InitDX11");
   }
 
-  if (surface_type == SurfaceTypeE::Gpu) {
-    texture_encoder.emplace(amf_context, d11_device, d11_context);
-  }
+  texture_encoder.emplace(amf_context, d11_device, d11_context);
 
-  if (amf_factory.CreateComponent(amf_context, details.amf_name, &encoder) !=
-      AMF_OK) {
+  if (amf_factory.CreateComponent(amf_context, details.amf_name,
+                                  &amf_encoder) != AMF_OK) {
     throw std::runtime_error("AMFFactory::CreateComponent");
   }
   apply_settings(data, obs_encoder);
-  if (encoder->Init(surface_format, width, height) != AMF_OK) {
+  if (amf_encoder->Init(surface_format, width, height) != AMF_OK) {
     throw std::runtime_error("AMFComponent::Init");
   }
   set_extra_data();
@@ -163,24 +163,24 @@ void Encoder::apply_settings(obs_data &data, obs_encoder &obs_encoder) {
       obs_color_space_to_amf(voi.colorspace, voi.range);
 
   for (const auto &setting : details.settings()) {
-    setting->amf_property(data, *encoder);
+    setting->amf_property(data, *amf_encoder);
   }
   // important for rate control
-  set_property_(*encoder, details.frame_rate,
+  set_property_(*amf_encoder, details.frame_rate,
                 AMFConstructRate(voi.fps_num, voi.fps_den));
-  set_property_(*encoder, details.input_color.profile,
+  set_property_(*amf_encoder, details.input_color.profile,
                 static_cast<int64_t>(color_space));
   // According to AMD developer comment on Github for SDR this does nothing
   // when set on the output but let's set it anyway for clarity and in case
   // we configure HDR in the future.
-  set_property_(*encoder, details.output_color.profile,
+  set_property_(*amf_encoder, details.output_color.profile,
                 static_cast<int64_t>(color_space));
-  details.set_color_range(*encoder, color_range);
+  details.set_color_range(*amf_encoder, color_range);
 }
 
 void Encoder::set_extra_data() {
   const auto variant{
-      get_property<amf::AMFVariant>(*encoder, details.extra_data)};
+      get_property<amf::AMFVariant>(*amf_encoder, details.extra_data)};
   if (variant.type != amf::AMF_VARIANT_INTERFACE) {
     throw std::runtime_error("extradata property is not interface");
   }
@@ -189,7 +189,7 @@ void Encoder::set_extra_data() {
   extra_data.resize(size);
   std::memcpy(extra_data.data(), buffer.GetNative(), size);
 }
-bool Encoder::encode(SurfaceTypeV surface_type, encoder_packet &packet,
+bool Encoder::encode(SurfaceType surface_type, encoder_packet &packet,
                      bool &received_packet) noexcept {
   // The OBS encoder interface expects one input frame to be immediately
   // encoded and returned.
@@ -227,7 +227,7 @@ bool Encoder::encode(SurfaceTypeV surface_type, encoder_packet &packet,
   return true;
 }
 
-void Encoder::send_frame_to_encoder(SurfaceTypeV surface_type) {
+void Encoder::send_frame_to_encoder(SurfaceType surface_type) {
   amf::AMFSurfacePtr surface;
   uint64_t pts;
   if (auto s = std::get_if<CpuSurface>(&surface_type)) {
@@ -242,7 +242,7 @@ void Encoder::send_frame_to_encoder(SurfaceTypeV surface_type) {
   set_property(*surface, pts_property, pts);
   // We do not handle AMF_INPUT_FULL because the input queue should never be
   // full.
-  const auto result = encoder->SubmitInput(surface);
+  const auto result = amf_encoder->SubmitInput(surface);
   switch (result) {
   case AMF_OK:
     break;
@@ -268,7 +268,6 @@ amf::AMFSurfacePtr Encoder::obs_frame_to_surface(const encoder_frame &frame) {
 amf::AMFSurfacePtr Encoder::obs_texture_to_surface(uint32_t handle,
                                                    uint64_t lock_key,
                                                    uint64_t &next_key) {
-  log(LOG_DEBUG, fmt::format("texture handle {}", handle));
   ASSERT_(texture_encoder);
   return texture_encoder->texture_to_surface(handle, lock_key, next_key);
 }
@@ -276,7 +275,7 @@ amf::AMFSurfacePtr Encoder::obs_texture_to_surface(uint32_t handle,
 // Returns whether a packet was received.
 bool Encoder::retrieve_packet_from_encoder(encoder_packet &packet) {
   amf::AMFDataPtr data;
-  const auto result = encoder->QueryOutput(&data);
+  const auto result = amf_encoder->QueryOutput(&data);
   if (result == AMF_REPEAT) {
     log(LOG_DEBUG, "repeat");
     return false;

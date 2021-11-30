@@ -3,7 +3,6 @@
 #include "util.h"
 
 #include <fmt/core.h>
-
 #include <obs-module.h>
 
 #include <combaseapi.h>

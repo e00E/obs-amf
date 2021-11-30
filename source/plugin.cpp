@@ -9,8 +9,6 @@
 #include <obs-module.h>
 
 #include <exception>
-#include <memory>
-#include <span>
 
 namespace {
 
@@ -18,7 +16,7 @@ struct EncoderPlugin {
   czstring id;
   czstring name;
   czstring codec;
-  SurfaceTypeE surface_type;
+  bool use_texture;
   const EncoderDetails &details;
 };
 
@@ -28,29 +26,30 @@ template <EncoderPlugin ep> void register_encoder() {
       .type = OBS_ENCODER_VIDEO,
       .codec = ep.codec,
       .get_name = [](auto) { return ep.name; },
-      .create = [](auto settings, auto encoder) -> void * {
+      .create = [](auto settings, auto encoder) noexcept -> void * {
         try {
-          return new Encoder(ep.details, *settings, *encoder, ep.surface_type);
-
+          return new Encoder(ep.details, *settings, *encoder);
         } catch (const std::exception &e) {
           log(LOG_ERROR, fmt::format("Plugin::Plugin: {}", e.what()));
           return nullptr;
         }
       },
-      .destroy = [](auto data) { delete static_cast<Encoder *>(data); },
+      .destroy =
+          [](auto data) noexcept { delete static_cast<Encoder *>(data); },
       .encode =
-          [](auto data, auto frame, auto packet, auto received_packet) {
+          [](auto data, auto frame, auto packet,
+             auto received_packet) noexcept {
             return static_cast<Encoder *>(data)->encode(
                 CpuSurface{.frame = frame}, *packet, *received_packet);
           },
       .get_defaults =
-          [](auto data) {
+          [](auto data) noexcept {
             for (const auto &setting : ep.details.settings()) {
               setting->obs_default(*data);
             }
           },
       .get_properties =
-          [](auto) {
+          [](auto) noexcept {
             auto &properties = *obs_properties_create();
             for (const auto &setting : ep.details.settings()) {
               setting->obs_property(properties);
@@ -58,18 +57,16 @@ template <EncoderPlugin ep> void register_encoder() {
             return &properties;
           },
       .get_extra_data =
-          [](auto data, auto extra_data, auto size) {
+          [](auto data, auto extra_data, auto size) noexcept {
             const auto span = static_cast<Encoder *>(data)->get_extra_data();
             *extra_data = span.data();
             *size = span.size();
             return true;
           },
-      .caps = ep.surface_type == SurfaceTypeE::Gpu
-                  ? OBS_ENCODER_CAP_PASS_TEXTURE
-                  : 0,
+      .caps = ep.use_texture ? OBS_ENCODER_CAP_PASS_TEXTURE : 0,
       .encode_texture =
           [](auto *data, auto handle, auto pts, auto lock_key, auto *next_key,
-             auto *packet, auto *received_packet) {
+             auto *packet, auto *received_packet) noexcept {
             return static_cast<Encoder *>(data)->encode(
                 GpuSurface{.handle = handle,
                            .pts = pts,
@@ -91,22 +88,22 @@ MODULE_EXPORT bool obs_module_load() {
   register_encoder<EncoderPlugin{.id = "amf avc cpu",
                                  .name = "AMF AVC CPU",
                                  .codec = "h264",
-                                 .surface_type = SurfaceTypeE::Cpu,
+                                 .use_texture = false,
                                  .details = encoder_details_avc}>();
   register_encoder<EncoderPlugin{.id = "amf avc gpu",
                                  .name = "AMF AVC GPU",
                                  .codec = "h264",
-                                 .surface_type = SurfaceTypeE::Gpu,
+                                 .use_texture = true,
                                  .details = encoder_details_avc}>();
   register_encoder<EncoderPlugin{.id = "amf hevc cpu",
                                  .name = "AMF HEVC CPU",
                                  .codec = "hevc",
-                                 .surface_type = SurfaceTypeE::Cpu,
+                                 .use_texture = false,
                                  .details = encoder_details_hevc}>();
   register_encoder<EncoderPlugin{.id = "amf hevc gpu",
                                  .name = "AMF HEVC GPU",
                                  .codec = "hevc",
-                                 .surface_type = SurfaceTypeE::Gpu,
+                                 .use_texture = true,
                                  .details = encoder_details_hevc}>();
   return true;
 }

@@ -7,14 +7,12 @@
 
 #include <AMF/components/Component.h>
 #include <AMF/core/Context.h>
-#include <AMF/core/Factory.h>
 #include <AMF/core/Plane.h>
 #include <AMF/core/Surface.h>
 #include <obs-module.h>
 
 #include <atlbase.h>
 #include <d3d11.h>
-#include <dxgi.h>
 
 #include <cstdint>
 #include <optional>
@@ -22,10 +20,12 @@
 #include <variant>
 #include <vector>
 
+// Data passed by OBS when encoding without texture support.
 struct CpuSurface {
   const not_null<encoder_frame *> frame;
 };
 
+// Data passed by OBS when encoding with texture support.
 struct GpuSurface {
   uint32_t handle;
   int64_t pts;
@@ -33,33 +33,34 @@ struct GpuSurface {
   not_null<uint64_t *> next_key;
 };
 
-using SurfaceTypeV = std::variant<CpuSurface, GpuSurface>;
-
-enum class SurfaceTypeE { Cpu, Gpu };
+using SurfaceType = std::variant<CpuSurface, GpuSurface>;
 
 class Encoder {
-  Amf amf;
   EncoderDetails details;
+  // The same device that OBS is configured with.
   CComPtr<ID3D11Device> d11_device;
   CComPtr<ID3D11DeviceContext> d11_context;
+  Amf amf;
+  // Based on d11_device.
   amf::AMFContextPtr amf_context;
-  // set if gpu surface was requested in constructor
+  amf::AMFComponentPtr amf_encoder;
+  // Optional only so that we can delay initilization in constructor.
   std::optional<TextureEncoder> texture_encoder;
-  amf::AMFComponentPtr encoder;
-  uint32_t dx11_adapter_index;
+
   uint32_t width;
   uint32_t height;
   amf::AMF_SURFACE_FORMAT surface_format;
   std::vector<uint8_t> extra_data;
-  // When returning a packet we need to give it a data pointer. It is not
-  // specified how long that pointer has to stay alive for. We assume it must
-  // live until the next call to encode. That data we store here.
+
+  // When returning a packet we need to give it a data pointer. That data is
+  // stored here. It is not specified how long that pointer has to stay alive.
+  // We assume it must live until the next call to encode.
   std::vector<uint8_t> packet_buffer;
 
   void initialize_dx11();
   void apply_settings(obs_data &a, obs_encoder &);
   void set_extra_data();
-  void send_frame_to_encoder(SurfaceTypeV);
+  void send_frame_to_encoder(SurfaceType);
   // Returns whether a packet was received.
   bool retrieve_packet_from_encoder(encoder_packet &);
   // surface is created on CPU
@@ -69,7 +70,8 @@ class Encoder {
                                             uint64_t &next_key);
 
 public:
-  Encoder(EncoderDetails, obs_data &, obs_encoder &, SurfaceTypeE);
-  bool encode(SurfaceTypeV, encoder_packet &, bool &received_packet) noexcept;
+  // Called by the OBS encoder plugin callbacks we configure in plugin.cpp .
+  Encoder(EncoderDetails, obs_data &, obs_encoder &);
+  bool encode(SurfaceType, encoder_packet &, bool &received_packet) noexcept;
   std::span<uint8_t> get_extra_data() noexcept;
 };

@@ -10,7 +10,6 @@
 
 #include <concepts>
 #include <stdexcept>
-#include <string>
 #include <string_view>
 
 // Better than dealing with printf style formatting even if less efficient.
@@ -40,7 +39,6 @@ void set_property(amf::AMFPropertyStorage &storage, not_null<cwzstring> name,
         fmt::format("SetProperty {} {}", wstring_to_string(name), value));
   }
 }
-
 
 // like above but with logging
 template <AmfVariant T>

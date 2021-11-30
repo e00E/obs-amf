@@ -1,6 +1,5 @@
 #include "encoder_details.h"
 
-#include "settings.h"
 #include "util.h"
 
 #include <AMF/components/VideoEncoderVCE.h>

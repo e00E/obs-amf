@@ -47,4 +47,4 @@ target_link_libraries(${PROJECT_NAME}
 	libobs
 )
 
-install_obs_plugin_with_data(${PROJECT_NAME} data)
+install_obs_plugin(${PROJECT_NAME})
