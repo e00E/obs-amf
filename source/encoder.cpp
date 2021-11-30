@@ -113,8 +113,6 @@ Encoder::Encoder(EncoderDetails details_, obs_data &data,
     throw std::runtime_error("AMFContext::InitDX11");
   }
 
-  texture_encoder.emplace(amf_context, d11_device, d11_context);
-
   if (amf_factory.CreateComponent(amf_context, details.amf_name,
                                   &amf_encoder) != AMF_OK) {
     throw std::runtime_error("AMFFactory::CreateComponent");
@@ -123,6 +121,10 @@ Encoder::Encoder(EncoderDetails details_, obs_data &data,
   if (amf_encoder->Init(surface_format, width, height) != AMF_OK) {
     throw std::runtime_error("AMFComponent::Init");
   }
+
+  texture_encoder.emplace(amf_context, d11_device, d11_context, width, height,
+                          surface_format);
+
   set_extra_data();
 }
 
