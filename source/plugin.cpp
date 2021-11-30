@@ -25,7 +25,7 @@ template <EncoderPlugin ep> void register_encoder() {
       .id = ep.id,
       .type = OBS_ENCODER_VIDEO,
       .codec = ep.codec,
-      .get_name = [](auto) { return ep.name; },
+      .get_name = [](auto) noexcept { return ep.name; },
       .create = [](auto settings, auto encoder) noexcept -> void * {
         try {
           return new Encoder(ep.details, *settings, *encoder);
