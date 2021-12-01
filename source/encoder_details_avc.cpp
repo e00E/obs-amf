@@ -110,8 +110,7 @@ std::vector<std::unique_ptr<Setting>> settings() noexcept {
                      AMF_VIDEO_ENCODER_MAX_NUM_REFRAMES, 0, 16, 1});
   // The following block can only be set when max num reframes is > 1.
   // Skipping them because need to find a clean way to conditionally disable
-  // them and they are Skipping them because need to find a clean way to
-  // conditionally disable them and they are niche.
+  // them and they are conditionally disable them and they are niche.
   /*
   result.emplace_back(new IntSetting{"b pic delta qp", "B Frame Delta QP",
                                      AMF_VIDEO_ENCODER_B_PIC_DELTA_QP, -10, 10,

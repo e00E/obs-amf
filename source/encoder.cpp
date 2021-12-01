@@ -295,8 +295,8 @@ bool Encoder::retrieve_packet_from_encoder(encoder_packet &packet) {
   packet.size = size;
 
   packet.pts = get_property<int64_t>(*buffer, pts_property);
-  // TODO: How to determine the correct DTS? Is it a fixed offset from PTS
-  // based on encoding parameters?
+  // TODO: What is the correct DTS? The PTS of the start of the current GOP? But
+  // that would only apply for "closed GOPS" with IDR frames.
   packet.dts = packet.pts;
 
   // packet.timebase_* is not set because it is not set by other encoders
