@@ -11,6 +11,17 @@ It was made because the [existing](https://github.com/obsproject/obs-amd-encoder
 
 It is in functioning condition but mostly motivated by my personal use case. I am unsure how much work I want to put into making it easy to use for non technical users.
 
+# Installation
+
+Releases are found on [Releases page](https://github.com/e00E/obs-amf/releases) on the right.
+
+Additionally every commit is automatically built by CI. To download an artifact (the plugin dll):
+- Go to the [Actions tab](https://github.com/e00E/obs-amf/actions).
+- Find the most recent `master` run and click on the title (first column, bold).
+- Click on `win64` at the bottom of the page in the `Artifacts` card. This downloads a zip file.
+
+Regardless of how the plugin was downloaded the final step is to move it into your OBS plugin folder.
+
 # Code
 
 In contrast to other OBS related code I wanted to:
@@ -27,14 +38,12 @@ In contrast to other OBS related code I wanted to:
 
 I would like to:
 - Build as a standalone project instead of intrusively integrating with obs-studio.
-- Set up CI to perform automated builds and release of artifacts.
 
 # TODOs
 
 - Set detailed (hover) descriptions for settings.
 - Query capabilities for some settings to determine maximum values.
 - Make settings easier to understand and prevent misconfiguration by grouping into related settings, disabling incompatible settings like different rate control methods), grouping into commonly used and expert settings.
-- Allow the user to choose the GPU device. How should this interact with texture based encoding which has to be on same GPU?
 - Double check video format conversions.
 - Double check color space conversions. Are we using the right values for SRGB? Should we use the extra HDR settings in AMF?
 - Compare to https://github.com/obsproject/obs-studio/pull/4538 which has advanced color settings and texture support.
