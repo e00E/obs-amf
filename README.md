@@ -18,7 +18,7 @@ Releases are found on [Releases page](https://github.com/e00E/obs-amf/releases) 
 Additionally every commit is automatically built by CI. To download an artifact (the plugin dll):
 - Go to the [Actions tab](https://github.com/e00E/obs-amf/actions).
 - Find the most recent `master` run and click on the title (first column, bold).
-- Click on `win64` at the bottom of the page in the `Artifacts` card. This downloads a zip file.
+- Click on `win64` at the bottom of the page in the `Artifacts` card. This downloads a zip file. The download link is only available if you are logged into GitHub. As a workaround unregistered users can use https://nightly.link/. Paste the link to the run (the url contains the path `/actions/runs/`) and click `Get links`.
 
 Regardless of how the plugin was downloaded the final step is to move it into your OBS plugin folder.
 
