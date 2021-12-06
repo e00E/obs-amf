@@ -6,7 +6,8 @@
 #include <AMF/core/PropertyStorage.h>
 
 #include <memory>
-#include <vector>
+#include <span>
+#include <variant>
 
 enum class ColorRange { Partial, Full };
 
@@ -31,7 +32,7 @@ struct EncoderDetails {
   ColorProperties output_color;
   // First element is AMF_VIDEO_ENCODER_USAGE which should be applied first
   // because it determines defaults for other properties.
-  not_null<std::vector<std::unique_ptr<Setting>> (*)()> settings;
+  std::span<std::unique_ptr<Setting>> settings;
   not_null<void (*)(amf::AMFPropertyStorage &, ColorRange)> set_color_range;
   not_null<PacketInfo (*)(amf::AMFPropertyStorage &)> packet_info;
 };
