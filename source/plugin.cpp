@@ -44,14 +44,14 @@ template <EncoderPlugin ep> void register_encoder() {
           },
       .get_defaults =
           [](auto data) noexcept {
-            for (const auto &setting : ep.details.settings()) {
+            for (const auto &setting : ep.details.settings) {
               setting->obs_default(*data);
             }
           },
       .get_properties =
           [](auto) noexcept {
             auto &properties = *obs_properties_create();
-            for (const auto &setting : ep.details.settings()) {
+            for (const auto &setting : ep.details.settings) {
               setting->obs_property(properties);
             }
             return &properties;
