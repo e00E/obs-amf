@@ -162,9 +162,7 @@ void Encoder::apply_settings(obs_data &data, obs_encoder &obs_encoder) {
   const auto [color_space, color_range] =
       obs_color_space_to_amf(voi.colorspace, voi.range);
 
-  for (const auto &setting : details.settings) {
-    setting->amf_property(data, *amf_encoder);
-  }
+  details.configure_encoder(*amf_encoder, data);
   // important for rate control
   set_property_(*amf_encoder, details.frame_rate,
                 AMFConstructRate(voi.fps_num, voi.fps_den));

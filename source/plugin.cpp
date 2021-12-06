@@ -17,6 +17,7 @@ struct EncoderPlugin {
   czstring name;
   czstring codec;
   bool use_texture;
+  const std::span<const std::unique_ptr<const Setting>> &settings;
   const EncoderDetails &details;
 };
 
@@ -44,14 +45,14 @@ template <EncoderPlugin ep> void register_encoder() {
           },
       .get_defaults =
           [](auto data) noexcept {
-            for (const auto &setting : ep.details.settings) {
+            for (const auto &setting : ep.settings) {
               setting->obs_default(*data);
             }
           },
       .get_properties =
           [](auto) noexcept {
             auto &properties = *obs_properties_create();
-            for (const auto &setting : ep.details.settings) {
+            for (const auto &setting : ep.settings) {
               setting->obs_property(properties);
             }
             return &properties;
@@ -89,21 +90,25 @@ MODULE_EXPORT bool obs_module_load() {
                                  .name = "AMF AVC CPU",
                                  .codec = "h264",
                                  .use_texture = false,
+                                 .settings = settings_avc,
                                  .details = encoder_details_avc}>();
   register_encoder<EncoderPlugin{.id = "amf avc gpu",
                                  .name = "AMF AVC GPU",
                                  .codec = "h264",
                                  .use_texture = true,
+                                 .settings = settings_avc,
                                  .details = encoder_details_avc}>();
   register_encoder<EncoderPlugin{.id = "amf hevc cpu",
                                  .name = "AMF HEVC CPU",
                                  .codec = "hevc",
                                  .use_texture = false,
+                                 .settings = settings_hevc,
                                  .details = encoder_details_hevc}>();
   register_encoder<EncoderPlugin{.id = "amf hevc gpu",
                                  .name = "AMF HEVC GPU",
                                  .codec = "hevc",
                                  .use_texture = true,
+                                 .settings = settings_hevc,
                                  .details = encoder_details_hevc}>();
   return true;
 }

@@ -44,7 +44,7 @@ class Encoder {
   // Based on d11_device.
   amf::AMFContextPtr amf_context;
   amf::AMFComponentPtr amf_encoder;
-  // Optional only so that we can delay initilization in constructor.
+  // Optional only so that we can delay initialization in constructor.
   std::optional<TextureEncoder> texture_encoder;
 
   uint32_t width;

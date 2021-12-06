@@ -6,9 +6,9 @@
 
 namespace {
 
-using S = std::unique_ptr<Setting>;
+using S = std::unique_ptr<const Setting>;
 
-S settings[] = {
+const S settings[] = {
     S{new EnumSetting{
         "usage",
         "Usage",
@@ -194,7 +194,14 @@ const EncoderDetails encoder_details_avc{
                      .transfer_characteristic =
                          AMF_VIDEO_ENCODER_OUTPUT_TRANSFER_CHARACTERISTIC,
                      .primaries = AMF_VIDEO_ENCODER_OUTPUT_COLOR_PRIMARIES},
-    .settings = settings,
+    .configure_encoder =
+        [](auto &encoder, auto &data) {
+          for (const auto &setting : settings) {
+            setting->amf_property(data, encoder);
+          }
+        },
     .set_color_range = set_color_range,
     .packet_info = packet_info,
 };
+
+const std::span<const std::unique_ptr<const Setting>> settings_avc{settings};
