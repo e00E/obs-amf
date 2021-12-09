@@ -75,7 +75,7 @@ const S settings_[] = {
                       AMF_VIDEO_ENCODER_HEVC_TIER,
                       {{AMF_VIDEO_ENCODER_HEVC_TIER_MAIN, "Main"},
                        {AMF_VIDEO_ENCODER_HEVC_TIER_HIGH, "High"}},
-                      0}},
+                      1}},
     S{new EnumSetting{"level",
                       "Level",
                       AMF_VIDEO_ENCODER_HEVC_PROFILE_LEVEL,
@@ -97,7 +97,7 @@ const S settings_[] = {
     // reads setting to a nonzero values only makes sense if we manually managed
     // them on a per frame basis which we do not.
     S{new IntSetting{"max num reframes", "Maximum Reference Frames",
-                     AMF_VIDEO_ENCODER_HEVC_MAX_NUM_REFRAMES, 0, 16, 1}},
+                     AMF_VIDEO_ENCODER_HEVC_MAX_NUM_REFRAMES, 0, 16, 4}},
     S{new BoolSetting{"low latency mode", "Low Latency Mode",
                       AMF_VIDEO_ENCODER_HEVC_LOWLATENCY_MODE, false}},
     S{new EnumSetting{
@@ -162,7 +162,7 @@ const S settings_[] = {
         0}},
     // 0 = infinite
     S{new IntSetting{"gop size", "GOP Size", AMF_VIDEO_ENCODER_HEVC_GOP_SIZE, 0,
-                     1000, 30}},
+                     1000, 120}},
     // Frequency of IDR being inserted as start of a GOP. 0 = never.
     S{new IntSetting{"num gops per idr", "IDR GOP Interval",
                      AMF_VIDEO_ENCODER_HEVC_NUM_GOPS_PER_IDR, 0, 65535, 1}},

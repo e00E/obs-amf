@@ -70,7 +70,7 @@ const S settings_[] = {
          {AMF_VIDEO_ENCODER_PROFILE_CONSTRAINED_BASELINE,
           "Constrained Baseline"},
          {AMF_VIDEO_ENCODER_PROFILE_CONSTRAINED_HIGH, "Constrained High"}},
-        1}},
+        2}},
     S{new EnumSetting{"tier",
                       "Tier",
                       AMF_VIDEO_ENCODER_PROFILE_LEVEL,
@@ -144,7 +144,7 @@ const S settings_[] = {
                       AMF_VIDEO_ENCODER_FILLER_DATA_ENABLE, false}},
     // Skipping MAX_AU_SIZE because we couldn't find what it means.
     S{new IntSetting{"max num reframes", "Maximum Reference Frames",
-                     AMF_VIDEO_ENCODER_MAX_NUM_REFRAMES, 0, 16, 1}},
+                     AMF_VIDEO_ENCODER_MAX_NUM_REFRAMES, 0, 16, 4}},
     // The following block can only be set when max num reframes is > 1.
     // Skipping them because need to find a clean way to conditionally disable
     // them and they are conditionally disable them and they are niche.
@@ -165,7 +165,7 @@ const S settings_[] = {
     S{new IntSetting{"header insertion spacing", "Header Insertion Spacing",
                      AMF_VIDEO_ENCODER_HEADER_INSERTION_SPACING, 0, 1000, 0}},
     S{new IntSetting{"idr period", "IDR Period", AMF_VIDEO_ENCODER_IDR_PERIOD,
-                     0, 1000, 30}},
+                     0, 1000, 120}},
     S{new IntSetting{"slices per frame", "Slices Per Frame",
                      AMF_VIDEO_ENCODER_SLICES_PER_FRAME, 1,
                      std::numeric_limits<int>::max(), 1}},
