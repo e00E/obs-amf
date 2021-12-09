@@ -1,14 +1,17 @@
 // The definition of the OBS visible plugin.
 
 #include "encoder.h"
-#include "encoder_details.h"
+#include "encoder_avc.h"
+#include "encoder_hevc.h"
 #include "gsl.h"
+#include "settings.h"
 #include "util.h"
 
 #include <fmt/core.h>
 #include <obs-module.h>
 
 #include <exception>
+#include <memory>
 
 namespace {
 
@@ -17,11 +20,9 @@ struct EncoderPlugin {
   czstring name;
   czstring codec;
   bool use_texture;
-  const std::span<const std::unique_ptr<const Setting>> &settings;
-  const EncoderDetails &details;
 };
 
-template <EncoderPlugin ep> void register_encoder() {
+template <EncoderPlugin ep, typename Encoder> void register_encoder() {
   obs_encoder_info info{
       .id = ep.id,
       .type = OBS_ENCODER_VIDEO,
@@ -29,7 +30,7 @@ template <EncoderPlugin ep> void register_encoder() {
       .get_name = [](auto) noexcept { return ep.name; },
       .create = [](auto settings, auto encoder) noexcept -> void * {
         try {
-          return new Encoder(ep.details, *settings, *encoder);
+          return new Encoder(*settings, *encoder);
         } catch (const std::exception &e) {
           log(LOG_ERROR, "Plugin::Plugin: {}", e.what());
           return nullptr;
@@ -45,14 +46,14 @@ template <EncoderPlugin ep> void register_encoder() {
           },
       .get_defaults =
           [](auto data) noexcept {
-            for (const auto &setting : ep.settings) {
+            for (const auto &setting : Encoder::settings) {
               setting->obs_default(*data);
             }
           },
       .get_properties =
           [](auto) noexcept {
             auto &properties = *obs_properties_create();
-            for (const auto &setting : ep.settings) {
+            for (const auto &setting : Encoder::settings) {
               setting->obs_property(properties);
             }
             return &properties;
@@ -86,30 +87,34 @@ MODULE_EXPORT bool obs_module_load() {
   // Correct codec is important because the name is passed to ffmpeg which needs
   // to recognize it.
 
-  register_encoder<EncoderPlugin{.id = "amf avc cpu",
-                                 .name = "AMF AVC CPU",
-                                 .codec = "h264",
-                                 .use_texture = false,
-                                 .settings = settings_avc,
-                                 .details = encoder_details_avc}>();
-  register_encoder<EncoderPlugin{.id = "amf avc gpu",
-                                 .name = "AMF AVC GPU",
-                                 .codec = "h264",
-                                 .use_texture = true,
-                                 .settings = settings_avc,
-                                 .details = encoder_details_avc}>();
-  register_encoder<EncoderPlugin{.id = "amf hevc cpu",
-                                 .name = "AMF HEVC CPU",
-                                 .codec = "hevc",
-                                 .use_texture = false,
-                                 .settings = settings_hevc,
-                                 .details = encoder_details_hevc}>();
-  register_encoder<EncoderPlugin{.id = "amf hevc gpu",
-                                 .name = "AMF HEVC GPU",
-                                 .codec = "hevc",
-                                 .use_texture = true,
-                                 .settings = settings_hevc,
-                                 .details = encoder_details_hevc}>();
+  register_encoder<EncoderPlugin{
+                       .id = "amf avc cpu",
+                       .name = "AMF AVC CPU",
+                       .codec = "h264",
+                       .use_texture = false,
+                   },
+                   EncoderAvc>();
+  register_encoder<EncoderPlugin{
+                       .id = "amf avc gpu",
+                       .name = "AMF AVC GPU",
+                       .codec = "h264",
+                       .use_texture = true,
+                   },
+                   EncoderAvc>();
+  register_encoder<EncoderPlugin{
+                       .id = "amf hevc cpu",
+                       .name = "AMF HEVC CPU",
+                       .codec = "hevc",
+                       .use_texture = false,
+                   },
+                   EncoderHevc>();
+  register_encoder<EncoderPlugin{
+                       .id = "amf hevc gpu",
+                       .name = "AMF HEVC GPU",
+                       .codec = "hevc",
+                       .use_texture = true,
+                   },
+                   EncoderHevc>();
   return true;
 }
 

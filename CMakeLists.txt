@@ -19,9 +19,10 @@ add_library(${PROJECT_NAME} MODULE
 	source/amf.h
 	source/encoder.cpp
 	source/encoder.h
-	source/encoder_details.h
-	source/encoder_details_avc.cpp
-	source/encoder_details_hevc.cpp
+	source/encoder_avc.cpp
+	source/encoder_avc.h
+	source/encoder_hevc.cpp
+	source/encoder_hevc.h
 	source/gsl.h
 	source/module.cpp
 	source/module.h
@@ -32,6 +33,7 @@ add_library(${PROJECT_NAME} MODULE
 	source/texture_encoder.h
 	source/util.cpp
 	source/util.h
+	source/windows.h
 )
 
 target_include_directories(${PROJECT_NAME}
