@@ -1,7 +1,6 @@
 #pragma once
 
 #include "amf.h"
-#include "encoder_details.h"
 #include "gsl.h"
 #include "texture_encoder.h"
 
@@ -20,6 +19,27 @@
 #include <variant>
 #include <vector>
 
+enum class ColorRange { Partial, Full };
+
+struct ColorProperties {
+  not_null<cwzstring> profile;
+  not_null<cwzstring> transfer_characteristic;
+  not_null<cwzstring> primaries;
+};
+
+struct EncoderDetails {
+  not_null<cwzstring> amf_encoder_name;
+  not_null<cwzstring> extra_data_property;
+  not_null<cwzstring> frame_rate_property;
+  ColorProperties input_color_properties;
+  ColorProperties output_color_properties;
+};
+
+// information extracted from one encoder output packet
+struct PacketInfo {
+  bool is_key_frame;
+};
+
 // Data passed by OBS when encoding without texture support.
 struct CpuSurface {
   const not_null<encoder_frame *> frame;
@@ -36,7 +56,14 @@ struct GpuSurface {
 using SurfaceType = std::variant<CpuSurface, GpuSurface>;
 
 class Encoder {
+  // passed in or implemented by inheriting specialized encoders
   EncoderDetails details;
+  virtual void configure_encoder_with_obs_user_settings(amf::AMFComponent &,
+                                                        obs_data &) = 0;
+  virtual void set_color_range(amf::AMFPropertyStorage &, ColorRange) = 0;
+  virtual PacketInfo get_packet_info(amf::AMFPropertyStorage &) = 0;
+  // ---
+
   // The same device that OBS is configured with.
   CComPtr<ID3D11Device> d11_device;
   CComPtr<ID3D11DeviceContext> d11_context;
@@ -71,7 +98,7 @@ class Encoder {
 
 public:
   // Called by the OBS encoder plugin callbacks we configure in plugin.cpp .
-  Encoder(EncoderDetails, obs_data &, obs_encoder &);
+  Encoder(obs_data &, obs_encoder &, EncoderDetails);
   bool encode(SurfaceType, encoder_packet &, bool &received_packet) noexcept;
   std::span<uint8_t> get_extra_data() noexcept;
 };

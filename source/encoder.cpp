@@ -98,9 +98,9 @@ const not_null<cwzstring> pts_property{L"obs_pts"};
 
 } // namespace
 
-Encoder::Encoder(EncoderDetails details_, obs_data &data,
-                 obs_encoder &obs_encoder)
-    : details{std::move(details_)} {
+Encoder::Encoder(obs_data &data, obs_encoder &obs_encoder,
+                 EncoderDetails details_)
+    : details{details} {
   initialize_dx11();
 
   auto &amf_factory{amf.init()};
@@ -111,7 +111,7 @@ Encoder::Encoder(EncoderDetails details_, obs_data &data,
     throw std::runtime_error("AMFContext::InitDX11");
   }
 
-  if (amf_factory.CreateComponent(amf_context, details.amf_name,
+  if (amf_factory.CreateComponent(amf_context, details.amf_encoder_name,
                                   &amf_encoder) != AMF_OK) {
     throw std::runtime_error("AMFFactory::CreateComponent");
   }
@@ -161,24 +161,23 @@ void Encoder::apply_settings(obs_data &data, obs_encoder &obs_encoder) {
   surface_format = obs_format_to_amf(voi.format);
   const auto [color_space, color_range] =
       obs_color_space_to_amf(voi.colorspace, voi.range);
-
-  details.configure_encoder(*amf_encoder, data);
+  configure_encoder_with_obs_user_settings(*amf_encoder, data);
   // important for rate control
-  set_property_(*amf_encoder, details.frame_rate,
+  set_property_(*amf_encoder, details.frame_rate_property,
                 AMFConstructRate(voi.fps_num, voi.fps_den));
-  set_property_(*amf_encoder, details.input_color.profile,
+  set_property_(*amf_encoder, details.input_color_properties.profile,
                 static_cast<int64_t>(color_space));
   // According to AMD developer comment on Github for SDR this does nothing
   // when set on the output but let's set it anyway for clarity and in case
   // we configure HDR in the future.
-  set_property_(*amf_encoder, details.output_color.profile,
+  set_property_(*amf_encoder, details.output_color_properties.profile,
                 static_cast<int64_t>(color_space));
-  details.set_color_range(*amf_encoder, color_range);
+  set_color_range(*amf_encoder, color_range);
 }
 
 void Encoder::set_extra_data() {
   const auto variant{
-      get_property<amf::AMFVariant>(*amf_encoder, details.extra_data)};
+      get_property<amf::AMFVariant>(*amf_encoder, details.extra_data_property)};
   if (variant.type != amf::AMF_VARIANT_INTERFACE) {
     throw std::runtime_error("extradata property is not interface");
   }
@@ -304,7 +303,7 @@ bool Encoder::retrieve_packet_from_encoder(encoder_packet &packet) {
 
   packet.type = OBS_ENCODER_VIDEO;
 
-  const auto packet_info = details.packet_info(*buffer);
+  const auto packet_info = get_packet_info(*buffer);
   packet.keyframe = packet_info.is_key_frame;
 
   log(LOG_DEBUG, "packet pts {} keyframe {} size {}", packet.pts,
