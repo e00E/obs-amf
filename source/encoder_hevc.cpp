@@ -41,24 +41,23 @@ PacketInfo EncoderHevc::get_packet_info(amf::AMFPropertyStorage &output) {
   throw std::runtime_error(fmt::format("unknown packet type {}", packet_type));
 }
 
-EncoderHevc::EncoderHevc(obs_data &obs_data, obs_encoder &obs_encoder)
-    : Encoder(
-          obs_data, obs_encoder,
-          {
-              .amf_encoder_name = AMFVideoEncoder_HEVC,
-              .extra_data_property = AMF_VIDEO_ENCODER_HEVC_EXTRADATA,
-              .frame_rate_property = AMF_VIDEO_ENCODER_HEVC_FRAMERATE,
-              .input_color_properties =
-                  {.profile = AMF_VIDEO_ENCODER_HEVC_INPUT_COLOR_PROFILE,
-                   .transfer_characteristic =
-                       AMF_VIDEO_ENCODER_HEVC_INPUT_TRANSFER_CHARACTERISTIC,
-                   .primaries = AMF_VIDEO_ENCODER_HEVC_INPUT_COLOR_PRIMARIES},
-              .output_color_properties =
-                  {.profile = AMF_VIDEO_ENCODER_HEVC_OUTPUT_COLOR_PROFILE,
-                   .transfer_characteristic =
-                       AMF_VIDEO_ENCODER_HEVC_OUTPUT_TRANSFER_CHARACTERISTIC,
-                   .primaries = AMF_VIDEO_ENCODER_HEVC_OUTPUT_COLOR_PRIMARIES},
-          }) {}
+EncoderHevc::EncoderHevc()
+    : Encoder({
+          .amf_encoder_name = AMFVideoEncoder_HEVC,
+          .extra_data_property = AMF_VIDEO_ENCODER_HEVC_EXTRADATA,
+          .frame_rate_property = AMF_VIDEO_ENCODER_HEVC_FRAMERATE,
+          .input_color_properties =
+              {.profile = AMF_VIDEO_ENCODER_HEVC_INPUT_COLOR_PROFILE,
+               .transfer_characteristic =
+                   AMF_VIDEO_ENCODER_HEVC_INPUT_TRANSFER_CHARACTERISTIC,
+               .primaries = AMF_VIDEO_ENCODER_HEVC_INPUT_COLOR_PRIMARIES},
+          .output_color_properties =
+              {.profile = AMF_VIDEO_ENCODER_HEVC_OUTPUT_COLOR_PROFILE,
+               .transfer_characteristic =
+                   AMF_VIDEO_ENCODER_HEVC_OUTPUT_TRANSFER_CHARACTERISTIC,
+               .primaries = AMF_VIDEO_ENCODER_HEVC_OUTPUT_COLOR_PRIMARIES},
+      }) {
+}
 
 namespace {
 

@@ -98,9 +98,10 @@ const not_null<cwzstring> pts_property{L"obs_pts"};
 
 } // namespace
 
-Encoder::Encoder(obs_data &data, obs_encoder &obs_encoder,
-                 EncoderDetails details_)
-    : details{details} {
+Encoder::Encoder(EncoderDetails details_) : details{details_} {}
+
+void Encoder::finish_construction(obs_data &obs_data,
+                                  obs_encoder &obs_encoder) {
   initialize_dx11();
 
   auto &amf_factory{amf.init()};
@@ -115,7 +116,7 @@ Encoder::Encoder(obs_data &data, obs_encoder &obs_encoder,
                                   &amf_encoder) != AMF_OK) {
     throw std::runtime_error("AMFFactory::CreateComponent");
   }
-  apply_settings(data, obs_encoder);
+  apply_settings(obs_data, obs_encoder);
   if (amf_encoder->Init(surface_format, width, height) != AMF_OK) {
     throw std::runtime_error("AMFComponent::Init");
   }

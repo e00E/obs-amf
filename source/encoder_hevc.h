@@ -13,5 +13,5 @@ class EncoderHevc : public Encoder {
 public:
   static const std::span<const std::unique_ptr<const Setting>> settings;
 
-  EncoderHevc(obs_data &, obs_encoder &);
+  EncoderHevc();
 };

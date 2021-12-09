@@ -13,5 +13,5 @@ class EncoderAvc : public Encoder {
 public:
   static const std::span<const std::unique_ptr<const Setting>> settings;
 
-  EncoderAvc(obs_data &, obs_encoder &);
+  EncoderAvc();
 };

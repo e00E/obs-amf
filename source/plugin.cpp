@@ -28,9 +28,11 @@ template <EncoderPlugin ep, typename Encoder> void register_encoder() {
       .type = OBS_ENCODER_VIDEO,
       .codec = ep.codec,
       .get_name = [](auto) noexcept { return ep.name; },
-      .create = [](auto settings, auto encoder) noexcept -> void * {
+      .create = [](auto obs_data, auto obs_encoder) noexcept -> void * {
         try {
-          return new Encoder(*settings, *encoder);
+          auto encoder = std::make_unique<Encoder>();
+          encoder->finish_construction(*obs_data, *obs_encoder);
+          return encoder.release();
         } catch (const std::exception &e) {
           log(LOG_ERROR, "Plugin::Plugin: {}", e.what());
           return nullptr;

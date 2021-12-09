@@ -96,9 +96,15 @@ class Encoder {
   amf::AMFSurfacePtr obs_texture_to_surface(uint32_t handle, uint64_t lock_key,
                                             uint64_t &next_key);
 
+protected:
+  Encoder(EncoderDetails);
+
 public:
-  // Called by the OBS encoder plugin callbacks we configure in plugin.cpp .
-  Encoder(obs_data &, obs_encoder &, EncoderDetails);
+  // Call this after the real constructor.
+  // Cannot call virtual functions of derived in constructor so sadly need this
+  // workaround.
+  void finish_construction(obs_data &, obs_encoder &);
+  virtual ~Encoder() noexcept = default;
   bool encode(SurfaceType, encoder_packet &, bool &received_packet) noexcept;
   std::span<uint8_t> get_extra_data() noexcept;
 };
