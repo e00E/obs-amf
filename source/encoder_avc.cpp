@@ -8,6 +8,9 @@
 
 void EncoderAvc::configure_encoder_with_obs_user_settings(
     amf::AMFComponent &encoder, obs_data &obs_data) {
+  // The usage determines default values for other properties. We manually set
+  // almost all properties so it is not necessary for the user to pick the
+  // usage.
   set_property_(encoder, AMF_VIDEO_ENCODER_USAGE,
                 AMF_VIDEO_ENCODER_USAGE_TRANSCONDING);
   for (const auto &setting : settings) {
@@ -52,8 +55,7 @@ EncoderAvc::EncoderAvc()
                .transfer_characteristic =
                    AMF_VIDEO_ENCODER_OUTPUT_TRANSFER_CHARACTERISTIC,
                .primaries = AMF_VIDEO_ENCODER_OUTPUT_COLOR_PRIMARIES},
-      }) {
-}
+      }) {}
 
 namespace {
 
