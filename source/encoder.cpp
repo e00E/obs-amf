@@ -34,37 +34,58 @@ amf::AMF_SURFACE_FORMAT obs_format_to_amf(video_format format) {
   }
 }
 
-std::tuple<AMF_VIDEO_CONVERTER_COLOR_PROFILE_ENUM, ColorRange>
-obs_color_space_to_amf(video_colorspace obs_space, video_range_type obs_range) {
-  ColorRange color_range;
+struct Color {
+  AMF_VIDEO_CONVERTER_COLOR_PROFILE_ENUM profile;
+  AMF_COLOR_TRANSFER_CHARACTERISTIC_ENUM transfer_characteristic;
+  AMF_COLOR_PRIMARIES_ENUM primaries;
+  ColorRange range;
+};
+
+Color obs_color_space_to_amf(video_colorspace obs_space,
+                             video_range_type obs_range) {
+  Color color{
+      .profile = AMF_VIDEO_CONVERTER_COLOR_PROFILE_UNKNOWN,
+      .transfer_characteristic = AMF_COLOR_TRANSFER_CHARACTERISTIC_UNDEFINED,
+      .primaries = AMF_COLOR_PRIMARIES_UNDEFINED,
+      .range = ColorRange::Full,
+  };
+
   switch (obs_range) {
   case VIDEO_RANGE_PARTIAL:
-    color_range = ColorRange::Partial;
+    color.range = ColorRange::Partial;
     break;
   case VIDEO_RANGE_FULL:
-    color_range = ColorRange::Full;
+    color.range = ColorRange::Full;
     break;
   default:
     throw std::runtime_error("unknown color range");
   }
 
-  const auto is_full{color_range == ColorRange::Full};
-  AMF_VIDEO_CONVERTER_COLOR_PROFILE_ENUM amf_space;
+  // TODO: It is hard to find documentation on these color space properties. It
+  // would be nice if an expert could double check these.
+  const auto is_full{color.range == ColorRange::Full};
   switch (obs_space) {
   case VIDEO_CS_601:
-    amf_space = is_full ? AMF_VIDEO_CONVERTER_COLOR_PROFILE_FULL_601
-                        : AMF_VIDEO_CONVERTER_COLOR_PROFILE_601;
+    color.profile = is_full ? AMF_VIDEO_CONVERTER_COLOR_PROFILE_FULL_601
+                            : AMF_VIDEO_CONVERTER_COLOR_PROFILE_601;
+    color.transfer_characteristic = AMF_COLOR_TRANSFER_CHARACTERISTIC_SMPTE170M;
+    break;
+  case VIDEO_CS_709:
+    color.profile = is_full ? AMF_VIDEO_CONVERTER_COLOR_PROFILE_FULL_709
+                            : AMF_VIDEO_CONVERTER_COLOR_PROFILE_709;
+    color.transfer_characteristic = AMF_COLOR_TRANSFER_CHARACTERISTIC_BT709;
     break;
   case VIDEO_CS_SRGB:
-  case VIDEO_CS_709:
-    amf_space = is_full ? AMF_VIDEO_CONVERTER_COLOR_PROFILE_FULL_709
-                        : AMF_VIDEO_CONVERTER_COLOR_PROFILE_709;
+    color.profile = is_full ? AMF_VIDEO_CONVERTER_COLOR_PROFILE_FULL_709
+                            : AMF_VIDEO_CONVERTER_COLOR_PROFILE_709;
+    color.transfer_characteristic =
+        AMF_COLOR_TRANSFER_CHARACTERISTIC_IEC61966_2_1;
     break;
   default:
     throw std::runtime_error("unknown color space");
   }
 
-  return {amf_space, color_range};
+  return color;
 }
 
 static void copy_obs_frame_to_amf_surface(const encoder_frame &frame,
@@ -160,20 +181,29 @@ void Encoder::apply_settings(obs_data &data, obs_encoder &obs_encoder) {
   width = obs_encoder_get_width(&obs_encoder);
   height = obs_encoder_get_height(&obs_encoder);
   surface_format = obs_format_to_amf(voi.format);
-  const auto [color_space, color_range] =
-      obs_color_space_to_amf(voi.colorspace, voi.range);
+
   configure_encoder_with_obs_user_settings(*amf_encoder, data);
   // important for rate control
   set_property_(*amf_encoder, details.frame_rate_property,
                 AMFConstructRate(voi.fps_num, voi.fps_den));
+
+  const auto color = obs_color_space_to_amf(voi.colorspace, voi.range);
+  set_color_range(*amf_encoder, color.range);
   set_property_(*amf_encoder, details.input_color_properties.profile,
-                static_cast<int64_t>(color_space));
-  // According to AMD developer comment on Github for SDR this does nothing
-  // when set on the output but let's set it anyway for clarity and in case
-  // we configure HDR in the future.
+                static_cast<int64_t>(color.profile));
+  set_property_(*amf_encoder,
+                details.input_color_properties.transfer_characteristic,
+                static_cast<int64_t>(color.transfer_characteristic));
+  set_property_(*amf_encoder, details.input_color_properties.primaries,
+                static_cast<int64_t>(color.primaries));
+  // Unsure whether needs to be set on output.
   set_property_(*amf_encoder, details.output_color_properties.profile,
-                static_cast<int64_t>(color_space));
-  set_color_range(*amf_encoder, color_range);
+                static_cast<int64_t>(color.profile));
+  set_property_(*amf_encoder,
+                details.output_color_properties.transfer_characteristic,
+                static_cast<int64_t>(color.transfer_characteristic));
+  set_property_(*amf_encoder, details.output_color_properties.primaries,
+                static_cast<int64_t>(color.primaries));
 }
 
 void Encoder::set_extra_data() {
