@@ -243,13 +243,13 @@ bool Encoder::encode(SurfaceType surface_type, encoder_packet &packet,
   try {
     received_packet = retrieve_packet_from_encoder(packet);
   } catch (const std::exception &e) {
-    log(LOG_ERROR, "retrieve_packet_from_encoder: {}", e.what());
+    log(LOG_ERROR, "Error: retrieve_packet_from_encoder: {}", e.what());
     return false;
   }
   try {
     send_frame_to_encoder(surface_type);
   } catch (const std::exception &e) {
-    log(LOG_ERROR, "send_frame_to_encoder: {}", e.what());
+    log(LOG_ERROR, "Error: send_frame_to_encoder: {}", e.what());
     return false;
   }
   return true;

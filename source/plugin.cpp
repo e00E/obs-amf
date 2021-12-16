@@ -34,7 +34,7 @@ template <EncoderPlugin ep, typename Encoder> void register_encoder() {
           encoder->finish_construction(*obs_data, *obs_encoder);
           return encoder.release();
         } catch (const std::exception &e) {
-          log(LOG_ERROR, "Plugin::Plugin: {}", e.what());
+          log(LOG_ERROR, "Error: Plugin::Plugin: {}", e.what());
           return nullptr;
         }
       },
