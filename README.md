@@ -11,6 +11,8 @@ It was made because the [existing](https://github.com/obsproject/obs-amd-encoder
 
 It is in functioning condition but mostly motivated by my personal use case. I am unsure how much work I want to put into making it easy to use for non technical users.
 
+**Currently only works** on AMD driver "recommended" 21.10.2.
+
 # Installation
 
 Releases are found on [Releases page](https://github.com/e00E/obs-amf/releases) on the right.
