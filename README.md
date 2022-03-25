@@ -11,7 +11,7 @@ It was made because the [existing](https://github.com/obsproject/obs-amd-encoder
 
 It is in functioning condition but mostly motivated by my personal use case. I am unsure how much work I want to put into making it easy to use for non technical users.
 
-**Currently only works** on AMD driver "recommended" 21.10.2.
+**Currently works** on AMD driver "recommended" 22.3.1. The "optional" newer driver versions have caused the plugin to break in the past.
 
 # Installation
 
