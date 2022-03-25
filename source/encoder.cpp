@@ -275,7 +275,12 @@ void Encoder::send_frame_to_encoder(SurfaceType surface_type) {
   case AMF_OK:
     break;
   case AMF_NEED_MORE_INPUT:
-    log(LOG_DEBUG, "need more input");
+    log(LOG_DEBUG, "send_frame_to_encoder: need more input");
+    break;
+  case AMF_INPUT_FULL:
+    // This can happen on overloaded systems. We can't do anything except drop the frame.
+    log(LOG_DEBUG, "send_frame_to_encoder: input full");
+    log(LOG_WARNING, "dropping frame because encoder is overloaded");
     break;
   default:
     throw std::runtime_error(fmt::format("SubmitInput: {}", result));
