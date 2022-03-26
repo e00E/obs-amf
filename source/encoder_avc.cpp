@@ -128,6 +128,8 @@ const S settings_[] = {
                      26}},
     S{new IntSetting{"qp b", "CQP: B Frame QP", AMF_VIDEO_ENCODER_QP_B, 0, 51,
                      26}},
+    S{new IntSetting{"qvbr quality level", "QVBR Quality Level", AMF_VIDEO_ENCODER_QVBR_QUALITY_LEVEL,
+                     1, 51, 23}},
     S{new IntSetting{"vbv buffer size", "VBV Buffer Size",
                      AMF_VIDEO_ENCODER_VBV_BUFFER_SIZE, 1,
                      std::numeric_limits<int>::max(), 20000000}},
