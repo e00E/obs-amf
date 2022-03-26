@@ -72,14 +72,16 @@ enum  AMF_PA_CAQ_STRENGTH_ENUM
 
 
 // PA object properties
-#define AMF_PA_ENGINE_TYPE                          L"PAEngineType"                         // AMF_MEMORY_TYPE (Host, DX11, OPENCL, Auto default : UNKNOWN (Auto))" - determines how the object is initialized and what kernels to use
-                                                                                            //                                                                        by default it is Auto (DX11 and OpenCL are currently available)
+#define AMF_PA_ENGINE_TYPE                          L"PAEngineType"                         // AMF_MEMORY_TYPE (Host, DX11, OpenCL, Vulkan, Auto default : UNKNOWN (Auto))" - determines how the object is initialized and what kernels to use
+                                                                                            //                                                                        by default it is Auto (DX11, OpenCL and Vulkan are currently available)
 
 #define AMF_PA_SCENE_CHANGE_DETECTION_ENABLE        L"PASceneChangeDetectionEnable"         // bool       (default : True)                                          - Enable Scene Change Detection GPU algorithm
 #define AMF_PA_SCENE_CHANGE_DETECTION_SENSITIVITY   L"PASceneChangeDetectionSensitivity"	// AMF_PA_SCENE_CHANGE_DETECTION_SENSITIVITY_ENUM (default : Medium)    - Scene Change Detection Sensitivity
 #define AMF_PA_STATIC_SCENE_DETECTION_ENABLE        L"PAStaticSceneDetectionEnable"         // bool       (default : True)                                          - Enable Skip Detection GPU algorithm
 #define AMF_PA_STATIC_SCENE_DETECTION_SENSITIVITY   L"PAStaticSceneDetectionSensitivity"	// AMF_PA_STATIC_SCENE_DETECTION_SENSITIVITY_ENUM (default : High)      - Allowable absolute difference between pixels (sample counts)
+#define AMF_PA_FRAME_SAD_ENABLE                     L"PAFrameSadEnable"	                    // bool       (default : True)                                          - Enable Frame SAD algorithm
 #define AMF_PA_ACTIVITY_TYPE                        L"PAActivityType"                       // AMF_PA_ACTIVITY_TYPE_ENUM (default : Calculate on Y)                 - Block activity calculation mode
+#define AMF_PA_LTR_ENABLE                           L"PALongTermReferenceEnable"            // bool       (default : True)                                          - Enable Automatic Long Term Reference frame management
 
 
 
