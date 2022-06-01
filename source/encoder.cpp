@@ -268,8 +268,6 @@ void Encoder::send_frame_to_encoder(SurfaceType surface_type) {
     ASSERT_(false);
   }
   set_property(*surface, pts_property, pts);
-  // We do not handle AMF_INPUT_FULL because the input queue should never be
-  // full.
   const auto result = amf_encoder->SubmitInput(surface);
   switch (result) {
   case AMF_OK:
