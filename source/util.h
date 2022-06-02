@@ -42,13 +42,17 @@ void set_property(amf::AMFPropertyStorage &storage, not_null<cwzstring> name,
   }
 }
 
-// like above but with logging
+// like above but with logging and without throwing
 template <AmfVariant T>
-void set_property_(amf::AMFPropertyStorage &storage, not_null<cwzstring> name,
-                   const T &value) {
-  log(LOG_INFO,
-      fmt::format("SetProperty {} {}", wstring_to_string(name), value));
-  set_property(storage, name, value);
+void set_property_fallible(amf::AMFPropertyStorage &storage,
+                           not_null<cwzstring> name, const T &value) noexcept {
+  if (storage.SetProperty(name, value) == AMF_OK) {
+    log(LOG_INFO,
+        fmt::format("SetProperty OK {} {}", wstring_to_string(name), value));
+  } else {
+    log(LOG_ERROR,
+        fmt::format("SetProperty ERR {} {}", wstring_to_string(name), value));
+  }
 }
 
 // get property or throw

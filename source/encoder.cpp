@@ -184,26 +184,26 @@ void Encoder::apply_settings(obs_data &data, obs_encoder &obs_encoder) {
 
   configure_encoder_with_obs_user_settings(*amf_encoder, data);
   // important for rate control
-  set_property_(*amf_encoder, details.frame_rate_property,
-                AMFConstructRate(voi.fps_num, voi.fps_den));
+  set_property_fallible(*amf_encoder, details.frame_rate_property,
+                        AMFConstructRate(voi.fps_num, voi.fps_den));
 
   const auto color = obs_color_space_to_amf(voi.colorspace, voi.range);
   set_color_range(*amf_encoder, color.range);
-  set_property_(*amf_encoder, details.input_color_properties.profile,
-                static_cast<int64_t>(color.profile));
-  set_property_(*amf_encoder,
-                details.input_color_properties.transfer_characteristic,
-                static_cast<int64_t>(color.transfer_characteristic));
-  set_property_(*amf_encoder, details.input_color_properties.primaries,
-                static_cast<int64_t>(color.primaries));
+  set_property_fallible(*amf_encoder, details.input_color_properties.profile,
+                        static_cast<int64_t>(color.profile));
+  set_property_fallible(*amf_encoder,
+                        details.input_color_properties.transfer_characteristic,
+                        static_cast<int64_t>(color.transfer_characteristic));
+  set_property_fallible(*amf_encoder, details.input_color_properties.primaries,
+                        static_cast<int64_t>(color.primaries));
   // Unsure whether needs to be set on output.
-  set_property_(*amf_encoder, details.output_color_properties.profile,
-                static_cast<int64_t>(color.profile));
-  set_property_(*amf_encoder,
-                details.output_color_properties.transfer_characteristic,
-                static_cast<int64_t>(color.transfer_characteristic));
-  set_property_(*amf_encoder, details.output_color_properties.primaries,
-                static_cast<int64_t>(color.primaries));
+  set_property_fallible(*amf_encoder, details.output_color_properties.profile,
+                        static_cast<int64_t>(color.profile));
+  set_property_fallible(*amf_encoder,
+                        details.output_color_properties.transfer_characteristic,
+                        static_cast<int64_t>(color.transfer_characteristic));
+  set_property_fallible(*amf_encoder, details.output_color_properties.primaries,
+                        static_cast<int64_t>(color.primaries));
 }
 
 void Encoder::set_extra_data() {
@@ -276,7 +276,8 @@ void Encoder::send_frame_to_encoder(SurfaceType surface_type) {
     log(LOG_DEBUG, "send_frame_to_encoder: need more input");
     break;
   case AMF_INPUT_FULL:
-    // This can happen on overloaded systems. We can't do anything except drop the frame.
+    // This can happen on overloaded systems. We can't do anything except drop
+    // the frame.
     log(LOG_DEBUG, "send_frame_to_encoder: input full");
     log(LOG_WARNING, "dropping frame because encoder is overloaded");
     break;

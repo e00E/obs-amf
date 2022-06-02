@@ -11,8 +11,8 @@ void EncoderAvc::configure_encoder_with_obs_user_settings(
   // The usage determines default values for other properties. We manually set
   // almost all properties so it is not necessary for the user to pick the
   // usage.
-  set_property_(encoder, AMF_VIDEO_ENCODER_USAGE,
-                AMF_VIDEO_ENCODER_USAGE_TRANSCONDING);
+  set_property_fallible(encoder, AMF_VIDEO_ENCODER_USAGE,
+                        AMF_VIDEO_ENCODER_USAGE_TRANSCONDING);
   for (const auto &setting : settings) {
     setting->amf_property(obs_data, encoder);
   }
@@ -20,8 +20,8 @@ void EncoderAvc::configure_encoder_with_obs_user_settings(
 
 void EncoderAvc::set_color_range(amf::AMFPropertyStorage &encoder,
                                  ColorRange color_range) {
-  set_property(encoder, AMF_VIDEO_ENCODER_FULL_RANGE_COLOR,
-               color_range == ColorRange::Full);
+  set_property_fallible(encoder, AMF_VIDEO_ENCODER_FULL_RANGE_COLOR,
+                        color_range == ColorRange::Full);
 }
 
 PacketInfo EncoderAvc::get_packet_info(amf::AMFPropertyStorage &output) {
@@ -128,8 +128,8 @@ const S settings_[] = {
                      26}},
     S{new IntSetting{"qp b", "CQP: B Frame QP", AMF_VIDEO_ENCODER_QP_B, 0, 51,
                      26}},
-    S{new IntSetting{"qvbr quality level", "QVBR Quality Level", AMF_VIDEO_ENCODER_QVBR_QUALITY_LEVEL,
-                     1, 51, 23}},
+    S{new IntSetting{"qvbr quality level", "QVBR Quality Level",
+                     AMF_VIDEO_ENCODER_QVBR_QUALITY_LEVEL, 1, 51, 23}},
     S{new IntSetting{"vbv buffer size", "VBV Buffer Size",
                      AMF_VIDEO_ENCODER_VBV_BUFFER_SIZE, 1,
                      std::numeric_limits<int>::max(), 20000000}},
