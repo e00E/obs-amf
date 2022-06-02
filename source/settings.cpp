@@ -20,7 +20,7 @@ void BoolSetting::obs_default(obs_data &data) const noexcept {
 void BoolSetting::amf_property(obs_data &data,
                                amf::AMFComponent &encoder) const {
   const auto value{obs_data_get_bool(&data, name)};
-  set_property_(encoder, amf_name, value);
+  set_property_fallible(encoder, amf_name, value);
 }
 
 IntSetting::IntSetting(not_null<czstring> name, not_null<czstring> description,
@@ -49,7 +49,7 @@ void IntSetting::obs_default(obs_data &data) const noexcept {
 void IntSetting::amf_property(obs_data &data,
                               amf::AMFComponent &encoder) const {
   const auto value{gsl::narrow<int>(obs_data_get_int(&data, name))};
-  set_property_(encoder, amf_name, static_cast<int64_t>(value));
+  set_property_fallible(encoder, amf_name, static_cast<int64_t>(value));
 }
 
 EnumSetting::EnumSetting(
@@ -79,5 +79,5 @@ void EnumSetting::obs_default(obs_data &data) const noexcept {
 void EnumSetting::amf_property(obs_data &data,
                                amf::AMFComponent &encoder) const {
   const auto value{gsl::narrow<int>(obs_data_get_int(&data, name))};
-  set_property_(encoder, amf_name, static_cast<int64_t>(value));
+  set_property_fallible(encoder, amf_name, static_cast<int64_t>(value));
 }

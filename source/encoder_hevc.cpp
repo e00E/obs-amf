@@ -8,8 +8,8 @@
 
 void EncoderHevc::configure_encoder_with_obs_user_settings(
     amf::AMFComponent &encoder, obs_data &obs_data) {
-  set_property_(encoder, AMF_VIDEO_ENCODER_HEVC_USAGE,
-                AMF_VIDEO_ENCODER_HEVC_USAGE_TRANSCONDING);
+  set_property_fallible(encoder, AMF_VIDEO_ENCODER_HEVC_USAGE,
+                        AMF_VIDEO_ENCODER_HEVC_USAGE_TRANSCONDING);
   for (const auto &setting : settings) {
     setting->amf_property(obs_data, encoder);
   }
@@ -24,7 +24,7 @@ void EncoderHevc::set_color_range(amf::AMFPropertyStorage &encoder,
   case ColorRange::Full:
     value = AMF_VIDEO_ENCODER_HEVC_NOMINAL_RANGE_FULL;
   }
-  set_property(encoder, AMF_VIDEO_ENCODER_HEVC_NOMINAL_RANGE, value);
+  set_property_fallible(encoder, AMF_VIDEO_ENCODER_HEVC_NOMINAL_RANGE, value);
 }
 
 PacketInfo EncoderHevc::get_packet_info(amf::AMFPropertyStorage &output) {
@@ -56,8 +56,7 @@ EncoderHevc::EncoderHevc()
                .transfer_characteristic =
                    AMF_VIDEO_ENCODER_HEVC_OUTPUT_TRANSFER_CHARACTERISTIC,
                .primaries = AMF_VIDEO_ENCODER_HEVC_OUTPUT_COLOR_PRIMARIES},
-      }) {
-}
+      }) {}
 
 namespace {
 
