@@ -1,3 +1,5 @@
+Update: This plugin has become obsolete since OBS Studio version 28 which also ships an updated AMF implementation. This plugin is no longer being actively developed.
+
 # Introduction
 
 This is an [OBS](https://obsproject.com/) encoder plugin leveraging hardware acceleration on AMD GPUs through [AMF](https://github.com/GPUOpen-LibrariesAndSDKs/AMF). It has the following features:
